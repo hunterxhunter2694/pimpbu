@@ -1,0 +1,35 @@
+name: Build PimpBunny APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PimpBunny source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Clone Aniyomi extension build base
+        run: |
+          git clone --depth 1 --branch master https://github.com/aniyomiorg/aniyomi-extensions.git upstream
+          rm -rf upstream/src/en/pimpbunny
+          cp -R src/en/pimpbunny upstream/src/en/pimpbunny
+
+      - name: Build debug APK
+        working-directory: upstream
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :src:en:pimpbunny:assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: pimpbunny-apk
+          path: upstream/src/en/pimpbunny/build/outputs/apk/debug/*.apk
